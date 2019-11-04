@@ -1,0 +1,16 @@
+
+<head>
+    <title>News</title>
+    <link rel="stylesheet" href="{{source}}formatting.css">
+</head>
+<body>
+    {{#each data}}
+    <section>
+        <h1>{{title}}</h1>
+        <h3>{{date}}</h3>
+        <img src="{{imageSrc}}" alt="{{imageAlt}}">
+        <p>{{content}}</p>
+    </section>
+    {{/each}}
+    <script src="{{source}}/localnews.js"></script>
+</body>

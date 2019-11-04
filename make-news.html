@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Make News</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="">
+    </head>
+    <body>
+        <form action="postnews" method="POST">
+            <input type="text" name="title" placeholder="Title" required>
+            <input type="url" name="imageSrc" placeholder="imageSrc" required>
+            <input type="text" name="imageAlt" placeholder="imageAlt" required>
+            <textarea name="content" id="" cols="30" rows="10" placeholder="Content..."></textarea>
+			<input type="submit">
+        </form>
+    </body>
+</html>
