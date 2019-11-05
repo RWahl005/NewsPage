@@ -80,36 +80,58 @@ app.post('/auth', (req, res) => {
 app.get('/news/page/*/', (req, res) => {
     let pages = req.path.split('/');
     let num = parseInt(pages[pages.length-1])
+    if(num == 0) { 
+        res.redirect('/news')
+        return;
+    }
     if(newsData.length > (num * 3)){
         let articles = [];
         for(let i = num * 3; (i < ((num*3) + 3)) && (i < newsData.length); i++){
             articles.push(newsData[i].compile());
         }
-        res.render("news.hbs", {data: articles, source: '../../'});
+        let page = (num*3)+3 >  newsData.length ? 'last' : num;
+        res.render("news.hbs", {data: articles, page: page, prevPage: num-1, nextPage: num+1, pageNum: num+1});
     }
     else{
         res.redirect("/news");
     }
+});
+
+app.get('/news/*', (req, res) => {
+    if(!(req.path.split('/').length < 4 || (req.path.split('/').length < 5 && req.path.split('/')[3] == ''))){
+        res.redirect('/news');
+        return;
+    }
+    let name;
+    console.log(req.path.split('/'));
+    if(req.path.split('/').length < 4) name = req.path.split('/')[2];
+    else if(req.path.split('/').length < 5) name = req.path.split('/')[1];
+    for(let i in newsData){
+        console.log(name);
+        if(newsData[i].title.replace(' ', '_').toLowerCase() == name){
+            res.render("news.hbs", {data: [newsData[i]], page: -1, prevPage: -1, nextPage: -1, pageNum: "Search"});
+            return;
+        }
+    }
+    res.redirect('/news');
 })
 
 app.get('/news', (req, res) => {
+    if(req.path.split('/')[req.path.split('/').length] === '') res.redirect('/news');
     let articles = [];
-    for(let i in newsData){
+    for(let i = 0; (i < 3) && (i < newsData.length); i++){
         articles.push(newsData[i].compile());
     }
-    res.render("news.hbs", {data: articles, source: './'})
+    res.render("news.hbs", {data: articles, page: 0, prevPage: 0, nextPage: 1, pageNum: 1});
 });
 
 app.get('/news-make', (req, res) => {
     if(!req.session.login){
         res.sendFile(__dirname + '/login.html');
-        // res.end();
         return;
     }
     else{
-        console.log('ye')
         res.sendFile(__dirname + "/make-news.html");
-        // res.end();
         return;
     }
 });
