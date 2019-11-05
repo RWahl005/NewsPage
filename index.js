@@ -4,18 +4,19 @@ const bodyParser = require('body-parser');
 const rsql = require('./rsql/rsql.js');
 const app = express();
 const fs = require('fs');
+const { PerformanceObserver, performance } = require('perf_hooks');
 app.listen(8080, () => console.log('Server running...'));
 
 class Article{
-    constructor(title, imageSrc, imageAlt, date, content){
+    constructor(title, id, imageSrc, imageAlt, date, content){
         this.title = title;
+        this.id = id;
         this.imageSrc = imageSrc;
         this.imageAlt = imageAlt;
         this.date = date;
         this.content = content;
     }
     compile(){
-        this.content = this.content.replace("\r\n", "<br>");
         return this;
     }
 }
@@ -63,6 +64,9 @@ app.use(session({
 app.use(bodyParser.urlencoded({extended : true}));
 app.use(bodyParser.json());
 
+/**
+ * Confirming Authorization.
+ */
 app.post('/auth', (req, res) => {
     let username = req.body.username;
     let password = req.body.password;
@@ -77,6 +81,9 @@ app.post('/auth', (req, res) => {
     res.end();
 });
 
+/**
+ * Handle the pages.
+ */
 app.get('/news/page/*/', (req, res) => {
     let pages = req.path.split('/');
     let num = parseInt(pages[pages.length-1])
@@ -89,7 +96,7 @@ app.get('/news/page/*/', (req, res) => {
         for(let i = num * 3; (i < ((num*3) + 3)) && (i < newsData.length); i++){
             articles.push(newsData[i].compile());
         }
-        let page = (num*3)+3 >  newsData.length ? 'last' : num;
+        let page = (num*3)+3  <  newsData.length ? num : 'last';
         res.render("news.hbs", {data: articles, page: page, prevPage: num-1, nextPage: num+1, pageNum: num+1});
     }
     else{
@@ -97,19 +104,22 @@ app.get('/news/page/*/', (req, res) => {
     }
 });
 
+/**
+ * Handles the title stuff.
+ */
 app.get('/news/*', (req, res) => {
+    if(req.path.includes('%20')) {res.redirect(req.path.replace('%20', '_').toLowerCase());
+    return;}
     if(!(req.path.split('/').length < 4 || (req.path.split('/').length < 5 && req.path.split('/')[3] == ''))){
         res.redirect('/news');
         return;
     }
     let name;
-    console.log(req.path.split('/'));
     if(req.path.split('/').length < 4) name = req.path.split('/')[2];
     else if(req.path.split('/').length < 5) name = req.path.split('/')[1];
     for(let i in newsData){
-        console.log(name);
-        if(newsData[i].title.replace(' ', '_').toLowerCase() == name){
-            res.render("news.hbs", {data: [newsData[i]], page: -1, prevPage: -1, nextPage: -1, pageNum: "Search"});
+        if(newsData[i].id == name){
+            res.render("newsSearch.hbs", {data: [newsData[i]]});
             return;
         }
     }
@@ -146,8 +156,14 @@ app.post('/postnews', (req, res) => {
         let title = req.body.title;
         let imageSrc = req.body.imageSrc;
         let imageAlt = req.body.imageAlt;
-        let content = req.body.content.replace(/<br\s?\/?>/g,"\n");;
-        newsData.unshift(new Article(title, imageSrc, imageAlt, new Date(), content));
+        let content = req.body.content;
+        if(content.includes("<script") || content.includes("<link")){
+            req.session.login = false;
+            res.redirect('/news');
+            res.end();
+            return;
+        }
+        newsData.unshift(new Article(title, generateUUID(), imageSrc, imageAlt, new Date(), content));
         rinst.proccess(newsData);
         newsData = rinst.get(Article);
         req.session.login = false;
@@ -160,3 +176,20 @@ app.post('/postnews', (req, res) => {
 app.get('*', function(req, res){
     res.status(404).redirect("/news");
   });
+
+
+  function generateUUID() { // Public Domain/MIT
+    var d = new Date().getTime();//Timestamp
+    var d2 = (performance && performance.now && (performance.now()*1000)) || 0;//Time in microseconds since page-load or 0 if unsupported
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16;//random number between 0 and 16
+        if(d > 0){//Use timestamp until depleted
+            r = (d + r)%16 | 0;
+            d = Math.floor(d/16);
+        } else {//Use microseconds since page-load if supported
+            r = (d2 + r)%16 | 0;
+            d2 = Math.floor(d2/16);
+        }
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+}

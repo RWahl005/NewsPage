@@ -13,7 +13,7 @@ h1{
 h3{
     text-align: center;
     color: white;
-    font-size: 0.5em;
+    font-size: 0.7em;
 }
 img{
     display: block;
@@ -21,4 +21,8 @@ img{
 }
 p{
     text-indent: 10px;
+}
+
+a{
+    color: blue;
 }

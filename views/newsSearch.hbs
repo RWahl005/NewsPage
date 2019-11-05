@@ -6,14 +6,12 @@
 <body>
     {{#each data}}
     <section>
-        <h1><a href="/news/{{id}}">{{title}}</a></h1>
+        <h1>{{title}}</h1>
         <h3>{{date}}</h3>
         <img src="{{imageSrc}}" alt="{{imageAlt}}">
         <p>{{{content}}}</p>
     </section>
     {{/each}}
-    <p>News Page {{pageNum}}</p>
-    <a id="prev" href="/news/page/{{prevPage}}" class="{{page}}">< Previous Page</a>
-    <a id="next" href="/news/page/{{nextPage}}" class="{{page}}">Next Page ></a>
+    <p><a href="/news">Back to News</a></p>
     <script src="/localnews.js"></script>
 </body>
