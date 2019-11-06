@@ -7,6 +7,20 @@ const fs = require('fs');
 const { PerformanceObserver, performance } = require('perf_hooks');
 app.listen(8080, () => console.log('Server running...'));
 
+/*=======================================
+ * Configuration Section
+ * =======================================
+ */
+// The number of articles to be displayed.
+const articlesDisplayed = 3;
+/*=======================================
+ * End Of Configuration Section
+ * =======================================
+ */
+
+/**
+ * This is the class to store the articles.
+ */
 class Article{
     constructor(title, id, imageSrc, imageAlt, date, content){
         this.title = title;
@@ -20,6 +34,10 @@ class Article{
         return this;
     }
 }
+
+/*
+    Loads the data when the server starts.
+*/
 let newsData = [];
 const rinst = new rsql.RSQL(new rsql.JSONProperties('articles.json'));
 if(fs.existsSync('articles.json')){
@@ -30,7 +48,9 @@ if(fs.existsSync('articles.json')){
 }
 
 
-
+/*
+ * Load in handlebars. 
+ */
 const hbs = require('express-handlebars')({
     defaultLayout: 'main',
     extname: '.hbs',
@@ -70,7 +90,6 @@ app.use(bodyParser.json());
 app.post('/auth', (req, res) => {
     let username = req.body.username;
     let password = req.body.password;
-    console.log("recieved");
     if(!(username && password)) res.redirect("/news");
     if(username === "admin" && password === "123"){
         req.session.login = true;
@@ -91,12 +110,12 @@ app.get('/news/page/*/', (req, res) => {
         res.redirect('/news')
         return;
     }
-    if(newsData.length > (num * 3)){
+    if(newsData.length > (num * articlesDisplayed)){
         let articles = [];
-        for(let i = num * 3; (i < ((num*3) + 3)) && (i < newsData.length); i++){
+        for(let i = num * articlesDisplayed; (i < ((num*articlesDisplayed) + articlesDisplayed)) && (i < newsData.length); i++){
             articles.push(newsData[i].compile());
         }
-        let page = (num*3)+3  <  newsData.length ? num : 'last';
+        let page = (num*articlesDisplayed)+articlesDisplayed  <  newsData.length ? num : 'last';
         res.render("news.hbs", {data: articles, page: page, prevPage: num-1, nextPage: num+1, pageNum: num+1});
     }
     else{
@@ -126,15 +145,22 @@ app.get('/news/*', (req, res) => {
     res.redirect('/news');
 })
 
+/**
+ * Handles the main news page.
+ */
 app.get('/news', (req, res) => {
     if(req.path.split('/')[req.path.split('/').length] === '') res.redirect('/news');
     let articles = [];
-    for(let i = 0; (i < 3) && (i < newsData.length); i++){
+    for(let i = 0; (i < articlesDisplayed) && (i < newsData.length); i++){
         articles.push(newsData[i].compile());
     }
-    res.render("news.hbs", {data: articles, page: 0, prevPage: 0, nextPage: 1, pageNum: 1});
+    let page = (0*articlesDisplayed)+articlesDisplayed  <  newsData.length ? 0 : '0-last';
+    res.render("news.hbs", {data: articles, page: page, prevPage: 0, nextPage: 1, pageNum: 1});
 });
 
+/**
+ * Makes a news article.
+ */
 app.get('/news-make', (req, res) => {
     if(!req.session.login){
         res.sendFile(__dirname + '/login.html');
@@ -146,6 +172,53 @@ app.get('/news-make', (req, res) => {
     }
 });
 
+/**
+ * Deletes a news article.
+ */
+app.get('/news-delete', (req, res) => {
+    if(!req.session.login){
+        res.sendFile(__dirname + '/login.html');
+        return;
+    }
+    else{
+        res.render('delete-news.hbs', {data: newsData});
+    }
+});
+
+/**
+ * The request to delete a news article.
+ */
+app.post('/deletenews', (req, res) => {
+    if(!req.session.login){
+        res.redirect('/news');
+        return;
+    }
+    else{
+        let pass = req.body.password;
+        let artID = req.body.article;
+        if(pass !== 'e7u4'){
+            req.session.login = false;
+            res.redirect('/news');
+            return;
+        }
+        let foundId = 0;
+        for(let i in newsData){
+            if(newsData[i].id === artID){
+                foundId = i;
+                break;
+            }
+        }
+        newsData.splice(foundId, 1);
+        rinst.proccess(newsData);
+        newsData = rinst.get(Article);
+        req.session.login = false;
+        res.redirect('/news');
+    }
+});
+
+/**
+ * The request to make a new article.
+ */
 app.post('/postnews', (req, res) => {
     if(!req.session.login){
         res.redirect('/news-make');
@@ -173,11 +246,17 @@ app.post('/postnews', (req, res) => {
     }
 });
 
+/**
+ * If the page is not found then go here.
+ */
 app.get('*', function(req, res){
     res.status(404).redirect("/news");
-  });
+});
 
 
+/**
+ * Generates a new UUID
+ */
   function generateUUID() { // Public Domain/MIT
     var d = new Date().getTime();//Timestamp
     var d2 = (performance && performance.now && (performance.now()*1000)) || 0;//Time in microseconds since page-load or 0 if unsupported

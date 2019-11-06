@@ -6,5 +6,5 @@ for(let i in data){
 
 let nxt = document.getElementById("next");
 let prv = document.getElementById('prev');
-if(prv.className == '0' || prv.className == '-1') prv.style.display = "none";
-if(nxt.className == 'last' || nxt.className == '-1') nxt.style.display = "none";
+if(prv.className == '0' || prv.className == '-1' || prv.className == '0-last') prv.style.display = "none";
+if(nxt.className == 'last' || nxt.className == '-1' || prv.className == '0-last') nxt.style.display = "none";

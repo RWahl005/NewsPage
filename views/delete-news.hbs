@@ -1,0 +1,22 @@
+
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Make News</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="">
+    </head>
+    <body>
+        <p>Select an article to delete</p>
+        <form action="deletenews" method="POST">
+            <select name="article" id="article" required>
+                {{#each data}}
+                <option value="{{id}}">{{title}}</option>
+                {{/each}}
+            </select>
+            <label for="password">Admin Code required to delete an article:</label>
+            <input type="password" name="password" id="password" required/>
+            <input type="submit">
+        </form>
+    </body>
